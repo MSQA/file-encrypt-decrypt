@@ -18,7 +18,12 @@ public class FileSplit {
 
     public static void split(String srcFile, String destPath, int blockSize, String dataAlgorithm, String summaryAlgorithm) throws IOException, NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
         FileInputStream fileInputStream = new FileInputStream(new File(srcFile));
+        String filePath = UUID.randomUUID().toString().replace("-", "");
+        destPath = destPath + filePath + "/";
+        File file = new File(destPath);
+        file.mkdir();
         RandomAccessFile randomAccessFile = new RandomAccessFile(destPath + "security", "rw");
+        RandomAccessFile randomAccessFileInfo = new RandomAccessFile(destPath + "info", "rw");
         byte[] buffer = new byte[blockSize];
         int length;
         while ((length = fileInputStream.read(buffer)) != -1) {
@@ -41,11 +46,21 @@ public class FileSplit {
             stringBuffer.append("\"key\":\"" + key + "\",");
             stringBuffer.append("\"summary\":\"" + Crypto.summaryData(data, summaryAlgorithm) + "\"");
             stringBuffer.append("}\n");
+            System.out.println(stringBuffer.toString());
             randomAccessFile.seek(randomAccessFile.length());
             randomAccessFile.write(stringBuffer.toString().getBytes());
         }
         randomAccessFile.close();
         fileInputStream.close();
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("{");
+        stringBuffer.append("\"fileName\":\"" + filePath + srcFile.substring(srcFile.lastIndexOf("."), srcFile.length()) + "\",");
+        stringBuffer.append("\"summary\":\"" + Crypto.summaryFile(srcFile, summaryAlgorithm) + "\"");
+        stringBuffer.append("}\n");
+        System.out.println(stringBuffer.toString());
+        randomAccessFileInfo.seek(randomAccessFileInfo.length());
+        randomAccessFileInfo.write(stringBuffer.toString().getBytes());
+        randomAccessFileInfo.close();
     }
 
     public static void split(String srcFile, String destPath, int blockSize) {
